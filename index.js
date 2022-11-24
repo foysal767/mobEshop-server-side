@@ -27,6 +27,15 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/category/:name', async(req, res)=>{
+            const name = req.params.name;
+            console.log(name)
+            const query = {name: name}
+            const result = await productsCategoryCollection.findOne(query)
+            res.send(result)
+            console.log(result)
+        })
+
     }
     finally{
 
