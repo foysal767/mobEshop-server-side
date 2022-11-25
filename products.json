@@ -1,0 +1,74 @@
+[
+    {
+        "productName": "Nokia 105 Plus",
+        "originalPrice": "2000TK",
+        "resalePrice": "1000TK",
+        "name": "Basic Phones",
+        "yearsOfUse": "1",
+        "deliveryLocation": "Chittagong",
+        "sellersName": "Hanif",
+        "userEmail": "abcde@gmail.com",
+        "status": "unsold",
+        "img": "https://m.media-amazon.com/images/I/51GSe9rxsoL._SL1080_.jpg"
+    },
+    {
+        "productName": "Walton Olvio Q41",
+        "originalPrice": "1590TK",
+        "resalePrice": "990TK",
+        "name": "Basic Phones",
+        "yearsOfUse": "1",
+        "deliveryLocation": "Dhaka",
+        "sellersName": "Mountain",
+        "userEmail": "abc@gmail.com",
+        "status": "unsold",
+        "img": "https://www.mobiledokan.co/wp-content/uploads/2022/08/Walton-Olvio-Q41-Blue.jpg"
+    },
+    {
+        "productName": "Samsung Galaxy A53 5G",
+        "originalPrice": "49,999TK",
+        "resalePrice": "35,000TK",
+        "name": "Android Phones",
+        "yearsOfUse": "3",
+        "deliveryLocation": "Chittagong",
+        "sellersName": "Hanif",
+        "userEmail": "abcde@gmail.com",
+        "status": "unsold",
+        "img": "https://www.mobiledokan.co/wp-content/uploads/2021/08/Samsung-Galaxy-A53-5G-Black.jpg"
+    },
+    {
+        "productName": "OnePlus Nord N20 5G",
+        "originalPrice": "25,900TK",
+        "resalePrice": "18,000TK",
+        "name": "Android Phones",
+        "yearsOfUse": "1",
+        "deliveryLocation": "Chittagong",
+        "sellersName": "Hanif",
+        "userEmail": "abcde@gmail.com",
+        "status": "unsold",
+        "img": "https://www.smartphonesbd.com/images/phones/oneplus-nord-n20-5g-2022.jpg"
+    },
+    {
+        "productName": "Apple iPhone 13 Mini",
+        "originalPrice": "103,500TK",
+        "resalePrice": "75,000TK",
+        "name": "iPhones",
+        "yearsOfUse": "1",
+        "deliveryLocation": "Chittagong",
+        "sellersName": "Mountain",
+        "userEmail": "abc@gmail.com",
+        "status": "unsold",
+        "img": "https://www.mobiledokan.com/wp-content/uploads/2021/10/Apple-iPhone-13-Mini-image.jpg"
+    },
+    {
+        "productName": "Apple iPhone 12 Mini",
+        "originalPrice": "109,000TK",
+        "resalePrice": "65,000TK",
+        "name": "iPhones",
+        "yearsOfUse": "2",
+        "deliveryLocation": "Chittagong",
+        "sellersName": "Hanif",
+        "userEmail": "abcde@gmail.com",
+        "status": "unsold",
+        "img": "https://www.mobiledokan.com/wp-content/uploads/2020/10/Apple-iphone-12-Mini.jpg"
+    }
+]

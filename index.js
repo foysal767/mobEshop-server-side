@@ -19,7 +19,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try{
         const productsCategoryCollection = client.db('mobEshop').collection('productsCategory');
-
+        const productsCollection = client.db('mobEshop').collection('productsCollection');
 
         app.get('/category', async(req, res) => {
             const query ={};
@@ -31,7 +31,7 @@ async function run() {
             const name = req.params.name;
             console.log(name)
             const query = {name: name}
-            const result = await productsCategoryCollection.findOne(query)
+            const result = await productsCollection.find(query).toArray()
             res.send(result)
             console.log(result)
         })
