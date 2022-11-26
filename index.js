@@ -17,34 +17,57 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 async function run() {
-    try{
+    try {
         const productsCategoryCollection = client.db('mobEshop').collection('productsCategory');
         const productsCollection = client.db('mobEshop').collection('productsCollection');
+        const usersCollection = client.db('mobEshop').collection('usersCollection')
 
-        app.get('/category', async(req, res) => {
-            const query ={};
+        app.get('/category', async (req, res) => {
+            const query = {};
             const result = await productsCategoryCollection.find(query).toArray();
             res.send(result)
         })
 
-        app.get('/category/:name', async(req, res)=>{
+        app.get('/category/:name', async (req, res) => {
             const name = req.params.name;
             console.log(name)
-            const query = {name: name}
+            const query = { name: name }
             const result = await productsCollection.find(query).toArray()
             res.send(result)
             console.log(result)
         })
 
+
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.role === 'seller' })
+        })
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result)
+        })
+
+        app.get('/myproducts/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { userEmail: email }
+            const products = await productsCollection.find(query).toArray();
+            console.log(products)
+            res.send(products)
+        })
+
     }
-    finally{
+    finally {
 
     }
 }
 run().catch(console.log)
 
 
-app.get('/', async(req, res) => {
+app.get('/', async (req, res) => {
     res.send('mobEshop portal server is running')
 })
 
