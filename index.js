@@ -22,6 +22,8 @@ async function run() {
         const productsCollection = client.db('mobEshop').collection('productsCollection');
         const usersCollection = client.db('mobEshop').collection('usersCollection')
 
+        const bookingsCollection = client.db('mobEshop').collection('bookings')
+
         app.get('/category', async (req, res) => {
             const query = {};
             const result = await productsCategoryCollection.find(query).toArray();
@@ -75,6 +77,12 @@ async function run() {
             const query = {role:"seller"}
             const users = await usersCollection.find(query).toArray();
             res.send(users)
+        })
+
+        app.post('/bookings', async(req, res)=> {
+            const booking = req.body;
+            const result = await bookingsCollection.insertOne(booking)
+            res.send(result)
         })
 
         app.get('/advertise', async(req, res) =>{
