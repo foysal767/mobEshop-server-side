@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express()
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
@@ -68,11 +69,20 @@ async function run() {
             res.send({isAdmin: user?.role === 'admin'})
         })
 
+        app.get('/seller/verified/:email', async(req, res) =>{
+            const email = req.params.email;
+            const query = {email}
+            const user = await usersCollection.findOne(query);
+            res.send({isVerified: user?.verified === 'verified'})
+            console.log(isVerified)
+        })
+
         app.get('/allbuyers', async(req, res)=> {
             const query = {role:"buyer"}
             const users = await usersCollection.find(query).toArray();
             res.send(users)
         })
+
         app.get('/allsellers', async(req, res)=> {
             const query = {role:"seller"}
             const users = await usersCollection.find(query).toArray();
@@ -114,6 +124,20 @@ async function run() {
                 }
             }
             const result = await productsCollection.updateOne(filter, updatedDoc, options)
+            res.send(result)
+        })
+
+        app.delete('/allbuyers/:id', async(req, res) =>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await usersCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        app.delete('/allsellers/:id', async(req, res) =>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await usersCollection.deleteOne(query)
             res.send(result)
         })
 
