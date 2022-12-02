@@ -22,8 +22,8 @@ async function run() {
         const productsCategoryCollection = client.db('mobEshop').collection('productsCategory');
         const productsCollection = client.db('mobEshop').collection('productsCollection');
         const usersCollection = client.db('mobEshop').collection('usersCollection')
-
         const bookingsCollection = client.db('mobEshop').collection('bookings')
+        const reportedCollection = client.db('mobEshop').collection('reportedProducts')
 
         app.get('/category', async (req, res) => {
             const query = {};
@@ -73,7 +73,7 @@ async function run() {
             const email = req.params.email;
             const query = {email}
             const user = await usersCollection.findOne(query);
-            res.send({isVerified: user?.verified === 'verified'})
+            res.send({isVerified: user?.status === 'verified'})
             console.log(isVerified)
         })
 
@@ -124,6 +124,50 @@ async function run() {
                 }
             }
             const result = await productsCollection.updateOne(filter, updatedDoc, options)
+            res.send(result)
+        })
+
+        app.put('/allsellers/:id', async(req, res) =>{
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)}
+            const options = {upsert: true}
+            const updatedDoc = {
+                $set: {
+                    status: 'verified'
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, options)
+            res.send(result)
+        })
+
+        app.delete('/bookings/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await bookingsCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        // app.get('/reported/:id', async(req, res)=> {
+        //     const id = req.params.id;
+        //     const query = {id: id}
+        //     const result = await reportedCollection.find(query).toArray()
+        //     console.log(result)
+        //     res.send(result)
+        // })
+
+        app.post('/reported', async(req, res) =>{
+            const product = req.body;
+            const query = {
+                productName: product.productName,
+                buyerEmail: product.buyerEmail,
+                img: product.img
+            }
+            const alreadyReported = await reportedCollection.find(query).toArray()
+            if(alreadyReported.length){
+                const message = `You already reported ${product.productName}`
+                return res.send({acknowledged: false, message})
+            }
+            const result = await reportedCollection.insertOne(product)
             res.send(result)
         })
 
