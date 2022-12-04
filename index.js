@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express()
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
@@ -16,15 +17,15 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mxrfp9v.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-function verifyJWT(req, res, next){
+function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
-    if(!authHeader){
+    if (!authHeader) {
         return res.status(401).send("unauthorized access")
     }
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-        if(err) {
-            return res.status(403).send({message: 'forbidden access'})
+        if (err) {
+            return res.status(403).send({ message: 'forbidden access' })
         }
         req.decoded = decoded;
         next()
@@ -104,13 +105,13 @@ async function run() {
         app.get('/allbuyers', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
-            if(email !== decodedEmail){
-                return res.status(403).send({message: 'forbidden access'})
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
             }
-            const isAdminQuery = {email: decodedEmail}
+            const isAdminQuery = { email: decodedEmail }
             const userIsAdmin = await usersCollection.findOne(isAdminQuery)
-            if(userIsAdmin.role !== 'admin'){
-                return res.status(403).send({message: 'forbidden access'})
+            if (userIsAdmin.role !== 'admin') {
+                return res.status(403).send({ message: 'forbidden access' })
             }
             const query = { role: "buyer" }
             const users = await usersCollection.find(query).toArray();
@@ -120,35 +121,51 @@ async function run() {
         app.get('/allsellers', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
-            if(email !== decodedEmail){
-                return req.status(403).send({message: 'forbidden access'})
+            if (email !== decodedEmail) {
+                return req.status(403).send({ message: 'forbidden access' })
             }
-            const isAdminQuery = {email: decodedEmail}
+            const isAdminQuery = { email: decodedEmail }
             const userIsAdmin = await usersCollection.findOne(isAdminQuery)
-            if(userIsAdmin.role !== 'admin'){
-                return res.status(403).send({message: 'forbidden access'})
+            if (userIsAdmin.role !== 'admin') {
+                return res.status(403).send({ message: 'forbidden access' })
             }
             const query = { role: "seller" }
             const users = await usersCollection.find(query).toArray();
             res.send(users)
         })
 
-        app.get('/bookings', verifyJWT,  async (req, res) => {
+        app.get('/bookings', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
-            if(email !== decodedEmail){
-                return req.status(403).send({message: 'forbidden accesss'})
+            if (email !== decodedEmail) {
+                return req.status(403).send({ message: 'forbidden accesss' })
             }
             const query = { buyerEmail: email }
             const bookingProducts = await bookingsCollection.find(query).toArray();
             res.send(bookingProducts)
         })
 
-        app.get('/bookings/:id', async(req, res) => {
+        app.get('/bookings/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const booking = await bookingsCollection.findOne(query)
             res.send(booking)
+        })
+
+        app.post('/create-payment-intent', async(req, res) => {
+            const booking = req.body;
+            const price = booking.resalePrice;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
         })
 
         app.post('/bookings', async (req, res) => {
