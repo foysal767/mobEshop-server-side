@@ -101,14 +101,18 @@ async function run() {
             res.send({ isVerified: user?.status === 'verified' })
         })
 
-        app.get('/allbuyers', async (req, res) => {
+        app.get('/allbuyers', verifyJWT, async (req, res) => {
             const query = { role: "buyer" }
             const users = await usersCollection.find(query).toArray();
             res.send(users)
         })
 
         app.get('/allsellers', verifyJWT, async (req, res) => {
+            const email = req.query.email;
             const decodedEmail = req.decoded.email;
+            if(email !== decodedEmail){
+                return req.status(403).send({message: 'forbidden access'})
+            }
             const isAdminQuery = {email: decodedEmail}
             const userIsAdmin = await usersCollection.findOne(isAdminQuery)
             if(userIsAdmin.role !== 'admin'){
