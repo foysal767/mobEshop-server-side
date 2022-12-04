@@ -16,6 +16,20 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mxrfp9v.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req, res, next){
+    const authHeader = req.headers.authorization;
+    if(!authHeader){
+        return res.status(401).send("unauthorized access")
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if(err) {
+            return res.status(403).send({message: 'forbidden access'})
+        }
+        req.decoded = decoded;
+        next()
+    })
+}
 
 async function run() {
     try {
@@ -24,6 +38,17 @@ async function run() {
         const usersCollection = client.db('mobEshop').collection('usersCollection')
         const bookingsCollection = client.db('mobEshop').collection('bookings')
         const reportedCollection = client.db('mobEshop').collection('reportedProducts')
+
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            if (user) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' })
+                return res.send({ accessToken: token })
+            }
+            res.status(403).send({ accessToken: '' })
+        })
 
         app.get('/category', async (req, res) => {
             const query = {};
@@ -62,61 +87,71 @@ async function run() {
             res.send(myproducts)
         })
 
-        app.get('/users/admin/:email', async(req, res)=> {
+        app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email}
+            const query = { email }
             const user = await usersCollection.findOne(query);
-            res.send({isAdmin: user?.role === 'admin'})
+            res.send({ isAdmin: user?.role === 'admin' })
         })
 
-        app.get('/seller/verified/:email', async(req, res) =>{
+        app.get('/seller/verified/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email}
+            const query = { email }
             const user = await usersCollection.findOne(query);
-            res.send({isVerified: user?.status === 'verified'})
+            res.send({ isVerified: user?.status === 'verified' })
         })
 
-        app.get('/allbuyers', async(req, res)=> {
-            const query = {role:"buyer"}
+        app.get('/allbuyers', async (req, res) => {
+            const query = { role: "buyer" }
             const users = await usersCollection.find(query).toArray();
             res.send(users)
         })
 
-        app.get('/allsellers', async(req, res)=> {
-            const query = {role:"seller"}
+        app.get('/allsellers', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email;
+            const isAdminQuery = {email: decodedEmail}
+            const userIsAdmin = await usersCollection.findOne(isAdminQuery)
+            if(userIsAdmin.role !== 'admin'){
+                return res.status(403).send({message: 'forbidden access'})
+            }
+            const query = { role: "seller" }
             const users = await usersCollection.find(query).toArray();
             res.send(users)
         })
 
-        app.get('/bookings', async(req, res)=>{
+        app.get('/bookings', verifyJWT,  async (req, res) => {
             const email = req.query.email;
-            const query = {buyerEmail: email}
+            const decodedEmail = req.decoded.email;
+            if(email !== decodedEmail){
+                return req.status(403).send({message: 'forbidden accesss'})
+            }
+            const query = { buyerEmail: email }
             const bookingProducts = await bookingsCollection.find(query).toArray();
             res.send(bookingProducts)
         })
 
-        app.post('/bookings', async(req, res)=> {
+        app.post('/bookings', async (req, res) => {
             const booking = req.body;
             const result = await bookingsCollection.insertOne(booking)
             res.send(result)
         })
 
-        app.get('/advertise', async(req, res) =>{
-            const query = {advertise: 'advertise'}
+        app.get('/advertise', async (req, res) => {
+            const query = { advertise: 'advertise' }
             const products = await productsCollection.find(query).toArray();
             res.send(products)
         })
 
-        app.post('/product', async(req, res) =>{
+        app.post('/product', async (req, res) => {
             const product = req.body;
             const result = await productsCollection.insertOne(product);
             res.send(result);
         })
 
-        app.put('/myproducts/:id', async(req, res) => {
+        app.put('/myproducts/:id', async (req, res) => {
             const id = req.params.id;
-            const filter = {_id: ObjectId(id)}
-            const options = {upsert: true}
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true }
             const updatedDoc = {
                 $set: {
                     advertise: "advertise"
@@ -126,10 +161,10 @@ async function run() {
             res.send(result)
         })
 
-        app.put('/allsellers/:id', async(req, res) =>{
+        app.put('/allsellers/:id', async (req, res) => {
             const id = req.params.id;
-            const filter = {_id: ObjectId(id)}
-            const options = {upsert: true}
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true }
             const updatedDoc = {
                 $set: {
                     status: 'verified'
@@ -139,9 +174,9 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/bookings/:id', async(req, res) => {
+        app.delete('/bookings/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const result = await bookingsCollection.deleteOne(query)
             res.send(result)
         })
@@ -154,20 +189,20 @@ async function run() {
         //     res.send(result)
         // })
 
-        app.get('/reported', async(req, res) =>{
+        app.get('/reported', async (req, res) => {
             const query = {}
             const result = await reportedCollection.find(query).toArray();
             res.send(result)
         })
 
-        app.delete('/reported/:id', async(req, res) =>{
+        app.delete('/reported/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {id: id}
+            const query = { id: id }
             const result = await reportedCollection.deleteOne(query)
             res.send(result)
         })
 
-        app.post('/reported', async(req, res) =>{
+        app.post('/reported', async (req, res) => {
             const product = req.body;
             const query = {
                 productName: product.productName,
@@ -175,38 +210,38 @@ async function run() {
                 img: product.img
             }
             const alreadyReported = await reportedCollection.find(query).toArray()
-            if(alreadyReported.length){
+            if (alreadyReported.length) {
                 const message = `You already reported ${product.productName}`
-                return res.send({acknowledged: false, message})
+                return res.send({ acknowledged: false, message })
             }
             const result = await reportedCollection.insertOne(product)
             res.send(result)
         })
 
-        app.delete('/allbuyers/:id', async(req, res) =>{
+        app.delete('/allbuyers/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const result = await usersCollection.deleteOne(query)
             res.send(result)
         })
 
-        app.delete('/allsellers/:id', async(req, res) =>{
+        app.delete('/allsellers/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const result = await usersCollection.deleteOne(query)
             res.send(result)
         })
 
-        app.delete('/products/:id', async(req, res)=> {
+        app.delete('/products/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const result = await productsCollection.deleteOne(query)
             res.send(result)
         })
 
-        app.delete('/myproducts/:id', async(req, res)=> {
+        app.delete('/myproducts/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const result = await productsCollection.deleteOne(query)
             res.send(result)
         })
