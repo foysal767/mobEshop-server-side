@@ -74,7 +74,6 @@ async function run() {
             const query = {email}
             const user = await usersCollection.findOne(query);
             res.send({isVerified: user?.status === 'verified'})
-            console.log(isVerified)
         })
 
         app.get('/allbuyers', async(req, res)=> {
@@ -155,6 +154,19 @@ async function run() {
         //     res.send(result)
         // })
 
+        app.get('/reported', async(req, res) =>{
+            const query = {}
+            const result = await reportedCollection.find(query).toArray();
+            res.send(result)
+        })
+
+        app.delete('/reported/:id', async(req, res) =>{
+            const id = req.params.id;
+            const query = {id: id}
+            const result = await reportedCollection.deleteOne(query)
+            res.send(result)
+        })
+
         app.post('/reported', async(req, res) =>{
             const product = req.body;
             const query = {
@@ -182,6 +194,13 @@ async function run() {
             const id = req.params.id;
             const query = {_id: ObjectId(id)}
             const result = await usersCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        app.delete('/products/:id', async(req, res)=> {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await productsCollection.deleteOne(query)
             res.send(result)
         })
 
